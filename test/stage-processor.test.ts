@@ -607,9 +607,7 @@ describe('stack comments', () => {
         _content: string[],
         opts?: { truncate?: boolean },
       ) =>
-        opts?.truncate
-          ? Promise.resolve()
-          : Promise.reject(requestError(422)),
+        opts?.truncate ? Promise.resolve() : Promise.reject(requestError(422)),
     );
     const processor = setupCommentTest();
     await processor.processStages(['SomeStage']);
