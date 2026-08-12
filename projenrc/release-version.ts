@@ -1,7 +1,31 @@
+import { execSync } from 'child_process';
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import * as logging from 'projen/lib/logging';
-import { exec, execCapture, execOrUndefined } from 'projen/lib/util';
+
+// projen 0.101 removed the exec/execCapture/execOrUndefined helpers from
+// projen/lib/util, so shell out with child_process directly.
+function exec(command: string, options: { cwd: string }): void {
+  execSync(command, { cwd: options.cwd, stdio: 'inherit' });
+}
+
+function execCapture(command: string, options: { cwd: string }): Buffer {
+  return execSync(command, { cwd: options.cwd });
+}
+
+function execOrUndefined(
+  command: string,
+  options: { cwd: string },
+): string | undefined {
+  try {
+    const value = execSync(command, { cwd: options.cwd, stdio: 'pipe' })
+      .toString('utf-8')
+      .trim();
+    return value || undefined;
+  } catch {
+    return undefined;
+  }
+}
 
 export interface BumpOptions {
   /**
