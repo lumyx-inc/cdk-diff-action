@@ -43,10 +43,11 @@ junit.xml
 !/.prettierrc.json
 !/test/
 !/tsconfig.json
-!/tsconfig.dev.json
+!/test/tsconfig.json
 !/src/
 /lib
 !/.eslintrc.json
+!/projenrc/tsconfig.json
 !/dist/
 !/action.yml
 dist/package.json

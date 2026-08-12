@@ -154,6 +154,14 @@ const project = new GitHubActionTypeScriptProject({
       // package-exports subpaths, which classic "node" resolution can't see.
       module: 'nodenext',
       moduleResolution: TypeScriptModuleResolution.NODE_NEXT,
+      // @actions/github v8's .d.ts imports @octokit/core/dist-types/types,
+      // a subpath @octokit/core v7's exports map doesn't expose (it only
+      // exports "./types"), so nodenext resolution needs this escape hatch.
+      paths: {
+        '@octokit/core/dist-types/types': [
+          './node_modules/@octokit/core/dist-types/types.d.ts',
+        ],
+      },
     },
   },
   tsconfigDev: {
@@ -161,6 +169,11 @@ const project = new GitHubActionTypeScriptProject({
       lib: ['es2022', 'esnext'],
       module: 'nodenext',
       moduleResolution: TypeScriptModuleResolution.NODE_NEXT,
+      paths: {
+        '@octokit/core/dist-types/types': [
+          './node_modules/@octokit/core/dist-types/types.d.ts',
+        ],
+      },
     },
   },
   jestOptions: {

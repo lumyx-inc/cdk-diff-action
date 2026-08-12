@@ -33,10 +33,17 @@
       "mock-fs",
       "node"
     ],
-    "moduleResolution": "nodenext"
+    "moduleResolution": "nodenext",
+    "paths": {
+      "@octokit/core/dist-types/types": [
+        "./node_modules/@octokit/core/dist-types/types.d.ts"
+      ]
+    }
   },
   "include": [
     "src/**/*.ts"
   ],
-  "exclude": []
+  "exclude": [
+    "node_modules"
+  ]
 }
