@@ -185,6 +185,12 @@ const project = new GitHubActionTypeScriptProject({
 
 const projenProject = project as unknown as typescript.TypeScriptProject;
 
+// Supply-chain hardening: block dependency lifecycle scripts during install.
+// The only install-time scripts in the tree (@swc/core, unrs-resolver
+// postinstalls) are binary-download fallbacks; both ship their platform
+// binaries as optionalDependencies, so skipping them is safe.
+project.npmrc.addConfig('ignore-scripts', 'true');
+
 // @actions/core v2 and @actions/github v8 depend on undici 6; the 5.x line
 // pulled in by the projen-github-action-typescript defaults is EOL with
 // unpatched CVEs (GHSA-g9mf-h72j-4rw9 et al.). Stay below @actions/core v3 /

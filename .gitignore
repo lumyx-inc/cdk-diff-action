@@ -50,6 +50,7 @@ junit.xml
 !/projenrc/tsconfig.json
 !/dist/
 !/action.yml
+!/.npmrc
 dist/package.json
 dist/projenrc
 dist/bin
