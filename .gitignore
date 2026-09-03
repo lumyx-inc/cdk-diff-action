@@ -4,7 +4,6 @@
 !/.projen/deps.json
 !/.projen/files.json
 !/.github/workflows/pull-request-lint.yml
-!/.github/workflows/auto-approve.yml
 !/package.json
 !/LICENSE
 !/.npmignore
@@ -54,5 +53,4 @@ junit.xml
 dist/package.json
 dist/projenrc
 dist/bin
-!/.github/workflows/auto-merge.yml
 !/.projenrc.ts

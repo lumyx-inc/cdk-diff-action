@@ -20,6 +20,28 @@ updates:
     labels: [dependencies, npm]
     cooldown:
       default-days: 7
+    # Majors that projen (or .projenrc.ts) deliberately holds back. Bumping
+    # them in package.json is pointless: the next `npx projen` reverts them.
+    #   typescript              -- 7.x is the native compiler; ts-node,
+    #                              ts-jest and typescript-eslint need 5.x
+    #   eslint                  -- projen pins ^9 (repo still uses .eslintrc)
+    #   @types/node             -- projen derives it from minNodeVersion
+    #   commit-and-tag-version  -- projen pins ^12
+    #   @actions/core, @actions/github -- v3/v9 are ESM-only; jest and ncc
+    #                              cannot resolve their import-only exports
+    ignore:
+      - dependency-name: typescript
+        update-types: [version-update:semver-major]
+      - dependency-name: eslint
+        update-types: [version-update:semver-major]
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
+      - dependency-name: commit-and-tag-version
+        update-types: [version-update:semver-major]
+      - dependency-name: "@actions/core"
+        update-types: [version-update:semver-major]
+      - dependency-name: "@actions/github"
+        update-types: [version-update:semver-major]
     groups:
       monthly-batch:
         patterns: ["*"]

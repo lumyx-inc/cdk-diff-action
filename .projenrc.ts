@@ -1,4 +1,4 @@
-import { github, typescript } from 'projen';
+import { typescript } from 'projen';
 import {
   NodePackageManager,
   Transform,
@@ -24,13 +24,8 @@ const project = new GitHubActionTypeScriptProject({
   depsUpgradeOptions: {
     exclude: ['@aws-cdk/cloud-assembly-schema'],
     workflowOptions: {
-      labels: ['auto-approve'],
       schedule: UpgradeDependenciesSchedule.WEEKLY,
     },
-  },
-  autoApproveOptions: {
-    label: 'auto-approve',
-    allowedUsernames: ['pthrasher'],
   },
   actionMetadata: {
     author: 'Cory Hall',
@@ -181,6 +176,10 @@ const project = new GitHubActionTypeScriptProject({
   },
   minNodeVersion: '24',
   workflowNodeVersion: '24',
+  // TypeScript 7 is the native (Go) compiler and drops the JS compiler API
+  // that ts-node, ts-jest, and typescript-eslint (peer: <6.1) all depend on.
+  // Hold the 5.x line until that toolchain catches up.
+  typescriptVersion: '~5.9.3',
 });
 
 const projenProject = project as unknown as typescript.TypeScriptProject;
@@ -194,8 +193,9 @@ project.npmrc.addConfig('ignore-scripts', 'true');
 // @actions/core v2 and @actions/github v8 depend on undici 6; the 5.x line
 // pulled in by the projen-github-action-typescript defaults is EOL with
 // unpatched CVEs (GHSA-g9mf-h72j-4rw9 et al.). Stay below @actions/core v3 /
-// @actions/github v9: those are ESM-only with an import-only exports map,
-// which ncc's CJS bundling cannot resolve.
+// @actions/github v9: those are ESM-only with an import-only exports map.
+// tsc (nodenext) accepts them, but jest's resolver and ncc's CJS bundling
+// both fail to resolve them (verified against 3.0.1 / 9.1.1).
 project.addDeps('@actions/core@^2.0.3', '@actions/github@^8.0.1');
 
 // Force patched versions of transitive deps whose parents pin below the fix:
@@ -307,59 +307,9 @@ project.gitignore.exclude('dist/package.json');
 project.gitignore.exclude('dist/projenrc');
 project.gitignore.exclude('dist/bin');
 
-const autoMergeJob: github.workflows.Job = {
-  name: 'Set AutoMerge on PR #${{ github.event.number }}',
-  runsOn: ['ubuntu-latest'],
-  permissions: {
-    pullRequests: github.workflows.JobPermission.WRITE,
-    contents: github.workflows.JobPermission.WRITE,
-  },
-  steps: [
-    {
-      uses: 'peter-evans/enable-pull-request-automerge@v2',
-      with: {
-        token: '${{ secrets.PROJEN_GITHUB_TOKEN }}',
-        'pull-request-number': '${{ github.event.number }}',
-        'merge-method': 'SQUASH',
-      },
-    },
-  ],
-};
-
-projenProject.github
-  ?.tryFindWorkflow('auto-approve')
-  ?.file?.patch(
-    JsonPatch.replace(
-      '/jobs/approve/steps/0/uses',
-      'hmarr/auto-approve-action@v3',
-    ),
-  );
-
-const workflow = projenProject.github?.addWorkflow('auto-merge');
-workflow?.on({
-  // The 'pull request' event gives the workflow 'read-only' permissions on some
-  // pull requests (such as the ones from dependabot) when using the `GITHUB_TOKEN`
-  // security token. This prevents the workflow from approving these pull requests.
-  // Github has placed this guard so as to prevent security attacks by simply opening
-  // a pull request and triggering a workflow on a commit that was not vetted to make
-  // unintended changes to the repository.
-  //
-  // Instead use the 'pull request target' event here that gives the Github workflow
-  // 'read-write' permissions. This is safe because, this event, unlike the 'pull request'
-  // event references the BASE commit of the pull request and not the HEAD commit.
-  //
-  // We only enable auto-merge when a PR is opened, reopened or moving from Draft to Ready.
-  // That way a user can always disable auto-merge if they want to and the workflow will
-  // not automatically re-enable it, unless one of the events occurs.
-  pullRequestTarget: {
-    types: ['opened', 'reopened', 'ready_for_review'],
-  },
-});
-
 projenProject.packageTask.reset();
 projenProject.packageTask.exec(
   'cp node_modules/@aws-cdk/aws-service-spec/db.json.gz ./ && ncc build --external fsevents --source-map --license licenses.txt',
 );
-workflow?.addJobs({ enableAutoMerge: autoMergeJob });
 
 project.synth();
